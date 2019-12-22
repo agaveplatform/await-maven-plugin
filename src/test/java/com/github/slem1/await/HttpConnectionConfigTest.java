@@ -15,12 +15,14 @@ public class HttpConnectionConfigTest {
     public void shouldCreateDefaultInstance() {
         HttpConnectionConfig httpConnectionConfig = new HttpConnectionConfig();
         Assert.assertEquals(Integer.MAX_VALUE,httpConnectionConfig.getPriority());
+        Assert.assertFalse(httpConnectionConfig.isSkip());
     }
 
     @Test
     public void shouldCreateInitializedInstance() throws MalformedURLException {
-        HttpConnectionConfig httpConnectionConfig = new HttpConnectionConfig(new URL("http://localhost:9000"), 200, 0, true);
+        HttpConnectionConfig httpConnectionConfig = new HttpConnectionConfig(new URL("http://localhost:9000"), 200, 0, true, true);
         Assert.assertEquals(0, httpConnectionConfig.getPriority());
+        Assert.assertTrue(httpConnectionConfig.isSkip());
         Service service = httpConnectionConfig.buildService();
         Assert.assertEquals(HttpService.class, service.getClass());
     }

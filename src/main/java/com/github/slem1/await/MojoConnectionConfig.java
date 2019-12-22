@@ -22,4 +22,11 @@ public interface MojoConnectionConfig {
      * @return the priority.
      */
     int getPriority();
+
+    /**
+     * Returns true if the element should be skipped.
+     *
+     * @return the skip.
+     */
+    boolean isSkip();
 }

@@ -44,8 +44,8 @@ public class PollingTask {
             throw new IllegalArgumentException("waitTime value cannot be negative");
         }
 
-        if(priority < 0){
-            throw new IllegalArgumentException("priority value must be equals or greater than 0");
+        if (priority < 0){
+            throw new IllegalArgumentException("priority value must be equal to or greater than 0");
         }
 
         this.service = service;
@@ -64,7 +64,7 @@ public class PollingTask {
     }
 
     /**
-     * Start the polling of the {@code service}.
+     * Start the polling of the {@code service} after the delay period.
      *
      * @throws MojoExecutionException in case of severe execution failure.
      * @throws MojoFailureException   if the service is still unavailable after all the attempts.

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.slem1</groupId>
+    <groupId>org.agaveplatform.ops</groupId>
     <artifactId>await-maven-plugin</artifactId>
     <version>1.2</version>
 
@@ -12,7 +12,7 @@
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A plugin to pause maven build until some services become available.</description>
-    <url>https://github.com/slem1/await-maven-plugin</url>
+    <url>https://github.com/agaveplatform/await-maven-plugin</url>
 
     <properties>
         <maven-plugin-annotation.version>3.4</maven-plugin-annotation.version>
@@ -22,6 +22,7 @@
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
         <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-deploy-plugin.version>3.0.0-M1</maven-deploy-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
         <maven-gpg-plugin.version>1.5</maven-gpg-plugin.version>
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
@@ -29,15 +30,22 @@
     </properties>
 
     <scm>
-        <connection>scm:git:git://github.com/slem1/await-maven-plugin.git</connection>
-        <developerConnection>scm:git:ssh://github.com:slem1/await-maven-plugin.git</developerConnection>
-        <url>http://github.com/slem1/await-maven-plugin/tree/master</url>
+        <connection>scm:git:git://github.com/agaveplatform/await-maven-plugin.git</connection>
+        <developerConnection>scm:git:ssh://github.com:agaveplatform/await-maven-plugin.git</developerConnection>
+        <url>http://github.com/agaveplatform/await-maven-plugin/tree/master</url>
     </scm>
 
     <distributionManagement>
+        <repository>
+            <id>agave-maven-releases</id>
+            <name>Agave Maven repository</name>
+            <url>https://nexus.agaveplatform.org/repository/maven-releases</url>
+        </repository>
+
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>agave-maven-snapshot</id>
+            <name>Agave Maven snapshot repository</name>
+            <url>https://nexus.agaveplatform.org/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -79,8 +87,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
@@ -133,16 +141,34 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven-deploy-plugin.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
             <!-- maven deploy replacement -->
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>${nexus-staging-maven-plugin.version}</version>
-                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <serverId>agave-maven-releases</serverId>
+                    <nexusUrl>https://nexus.agaveplatform.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <skipStaging>true</skipStaging>
                 </configuration>
             </plugin>
 
@@ -150,6 +176,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>${maven-gpg-plugin.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -165,6 +194,9 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${coveralls-maven-plugin.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -190,6 +222,17 @@
             <email>sylvain.lem1@gmail.com</email>
             <organization>Sylvain Lemoine</organization>
             <organizationUrl>https://www.sylvainlemoine.com</organizationUrl>
+        </developer>
+        <developer>
+            <id>deardooley</id>
+            <name>Rion Dooleyy</name>
+            <email>deardooley@gmail.com</email>
+            <url>https://agaveplatform.org</url>
+            <organization>Chapman University</organization>
+            <organizationUrl>http://chapman.edu</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
         </developer>
     </developers>
 </project>

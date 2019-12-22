@@ -9,15 +9,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+import org.mockito.verification.VerificationMode;
 
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(JUnit4.class)
 public class MojoEntryPointTest {
@@ -102,6 +99,57 @@ public class MojoEntryPointTest {
     }
 
     @Test
+    public void shouldIgnoreSkippedTasks() throws MojoFailureException, MojoExecutionException, ServiceUnavailableException {
+
+        TCPConnectionConfig tcpConnectionConfig = mock(TCPConnectionConfig.class);
+        when(tcpConnectionConfig.getPriority()).thenReturn(1);
+        when(tcpConnectionConfig.isSkip()).thenReturn(true);
+        Service tcpService = mock(Service.class);
+        when(tcpService.toString()).thenReturn("localhost:10080 (TCP)");
+        doThrow(new ServiceUnavailableException("Service unavailable")).when(tcpService).execute();
+        when(tcpConnectionConfig.buildService()).thenReturn(tcpService);
+
+        HttpConnectionConfig httpConnectionConfig = mock(HttpConnectionConfig.class);
+        when(httpConnectionConfig.getPriority()).thenReturn(0);
+        when(httpConnectionConfig.isSkip()).thenReturn(true);
+        Service httpService = mock(HttpService.class);
+        when(httpService.toString()).thenReturn("http://localhost:10080");
+        when(httpConnectionConfig.buildService()).thenReturn(httpService);
+
+        mojoEntryPoint.setTcpConnections(Collections.singletonList(tcpConnectionConfig));
+        mojoEntryPoint.setHttpConnections(Collections.singletonList(httpConnectionConfig));
+
+        mojoEntryPoint.execute();
+        verify(httpService, never()).execute();
+        verify(tcpService, never()).execute();
+    }
+
+    @Test
+    public void shouldSkipAllTasksIfSkipAllConnections() throws MojoFailureException, MojoExecutionException, ServiceUnavailableException {
+
+        TCPConnectionConfig tcpConnectionConfig = mock(TCPConnectionConfig.class);
+        when(tcpConnectionConfig.getPriority()).thenReturn(1);
+        Service tcpService = mock(Service.class);
+        when(tcpService.toString()).thenReturn("localhost:10080 (TCP)");
+        doThrow(new ServiceUnavailableException("Service unavailable")).when(tcpService).execute();
+        when(tcpConnectionConfig.buildService()).thenReturn(tcpService);
+
+        HttpConnectionConfig httpConnectionConfig = mock(HttpConnectionConfig.class);
+        when(httpConnectionConfig.getPriority()).thenReturn(0);
+        Service httpService = mock(HttpService.class);
+        when(httpService.toString()).thenReturn("http://localhost:10080");
+        when(httpConnectionConfig.buildService()).thenReturn(httpService);
+
+        mojoEntryPoint.setSkipAllConnections(true);
+        mojoEntryPoint.setTcpConnections(Collections.singletonList(tcpConnectionConfig));
+        mojoEntryPoint.setHttpConnections(Collections.singletonList(httpConnectionConfig));
+
+        mojoEntryPoint.execute();
+        verify(httpService, never()).execute();
+        verify(tcpService, never()).execute();
+    }
+
+    @Test
     public void shouldRunTasksInOrderIfNoPriority() throws MojoFailureException, MojoExecutionException, ServiceUnavailableException {
 
         TCPConnectionConfig tcpConnectionConfig = mock(TCPConnectionConfig.class);
@@ -113,6 +161,41 @@ public class MojoEntryPointTest {
         Service httpService = mock(HttpService.class);
         when(httpService.toString()).thenReturn("http://localhost:10080");
         when(httpConnectionConfig.buildService()).thenReturn(httpService);
+
+        mojoEntryPoint.setTcpConnections(Collections.singletonList(tcpConnectionConfig));
+        mojoEntryPoint.setHttpConnections(Collections.singletonList(httpConnectionConfig));
+        mojoEntryPoint.execute();
+
+        InOrder inOrder = Mockito.inOrder(tcpService, httpService);
+
+        inOrder.verify(tcpService).execute();
+        inOrder.verify(httpService).execute();
+    }
+
+    @Test
+    public void shouldRunUnskippedTasksInOrderIfNoPriority() throws MojoFailureException, MojoExecutionException, ServiceUnavailableException {
+
+        TCPConnectionConfig tcpConnectionConfig = mock(TCPConnectionConfig.class);
+        Service tcpService = mock(Service.class);
+        when(tcpService.toString()).thenReturn("localhost:10080 (TCP)");
+        when(tcpConnectionConfig.buildService()).thenReturn(tcpService);
+
+        TCPConnectionConfig skippedTcpConnectionConfig = mock(TCPConnectionConfig.class);
+        Service skippedTcpService = mock(Service.class);
+        when(skippedTcpService.toString()).thenReturn("localhost:10080 (TCP)");
+        when(skippedTcpConnectionConfig.isSkip()).thenReturn(true);
+        when(skippedTcpConnectionConfig.buildService()).thenReturn(skippedTcpService);
+
+        HttpConnectionConfig httpConnectionConfig = mock(HttpConnectionConfig.class);
+        Service httpService = mock(HttpService.class);
+        when(httpService.toString()).thenReturn("http://localhost:10080");
+        when(httpConnectionConfig.buildService()).thenReturn(httpService);
+
+        HttpConnectionConfig skippedHttpConnectionConfig = mock(HttpConnectionConfig.class);
+        Service skippedHttpService = mock(HttpService.class);
+        when(skippedHttpConnectionConfig.toString()).thenReturn("http://localhost:10080");
+        when(skippedHttpConnectionConfig.isSkip()).thenReturn(true);
+        when(skippedHttpConnectionConfig.buildService()).thenReturn(skippedHttpService);
 
         mojoEntryPoint.setTcpConnections(Collections.singletonList(tcpConnectionConfig));
         mojoEntryPoint.setHttpConnections(Collections.singletonList(httpConnectionConfig));
@@ -138,6 +221,53 @@ public class MojoEntryPointTest {
         when(httpService.toString()).thenReturn("http://localhost:10080");
         when(httpConnectionConfig.buildService()).thenReturn(httpService);
         when(httpConnectionConfig.getPriority()).thenReturn(50);
+
+        TCPConnectionConfig tcpConnectionConfig2 = mock(TCPConnectionConfig.class);
+        Service tcpService2 = mock(Service.class);
+        when(tcpService2.toString()).thenReturn("localhost:10081 (TCP-2)");
+        when(tcpConnectionConfig2.buildService()).thenReturn(tcpService2);
+        when(tcpConnectionConfig2.getPriority()).thenReturn(Integer.MAX_VALUE);
+
+        mojoEntryPoint.setTcpConnections(Arrays.asList(tcpConnectionConfig1, tcpConnectionConfig2));
+        mojoEntryPoint.setHttpConnections(Collections.singletonList(httpConnectionConfig));
+        mojoEntryPoint.execute();
+
+        InOrder inOrder = Mockito.inOrder(tcpService2, tcpService1, httpService);
+
+        inOrder.verify(httpService).execute();
+        inOrder.verify(tcpService1).execute();
+        inOrder.verify(tcpService2).execute();
+
+    }
+
+    @Test
+    public void shouldRunUnskippedTasksInOrderWithPriority() throws MojoFailureException, MojoExecutionException, ServiceUnavailableException {
+
+        TCPConnectionConfig tcpConnectionConfig1 = mock(TCPConnectionConfig.class);
+        Service tcpService1 = mock(Service.class);
+        when(tcpService1.toString()).thenReturn("localhost:10080 (TCP-1)");
+        when(tcpConnectionConfig1.buildService()).thenReturn(tcpService1);
+        when(tcpConnectionConfig1.getPriority()).thenReturn(100);
+
+        TCPConnectionConfig skippedTcpConnectionConfig = mock(TCPConnectionConfig.class);
+        Service skippedTcpService = mock(Service.class);
+        when(skippedTcpService.toString()).thenReturn("localhost:10080 (TCP)");
+        when(skippedTcpConnectionConfig.isSkip()).thenReturn(true);
+        when(skippedTcpConnectionConfig.buildService()).thenReturn(skippedTcpService);
+        when(skippedTcpConnectionConfig.getPriority()).thenReturn(1);
+
+        HttpConnectionConfig httpConnectionConfig = mock(HttpConnectionConfig.class);
+        Service httpService = mock(HttpService.class);
+        when(httpService.toString()).thenReturn("http://localhost:10080");
+        when(httpConnectionConfig.buildService()).thenReturn(httpService);
+        when(httpConnectionConfig.getPriority()).thenReturn(50);
+
+        HttpConnectionConfig skippedHttpConnectionConfig = mock(HttpConnectionConfig.class);
+        Service skippedHttpService = mock(HttpService.class);
+        when(skippedHttpConnectionConfig.toString()).thenReturn("http://localhost:10080");
+        when(skippedHttpConnectionConfig.isSkip()).thenReturn(true);
+        when(skippedHttpConnectionConfig.buildService()).thenReturn(skippedHttpService);
+        when(skippedHttpConnectionConfig.getPriority()).thenReturn(2);
 
         TCPConnectionConfig tcpConnectionConfig2 = mock(TCPConnectionConfig.class);
         Service tcpService2 = mock(Service.class);

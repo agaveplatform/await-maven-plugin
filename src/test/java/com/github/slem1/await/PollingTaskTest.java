@@ -62,7 +62,7 @@ public class PollingTaskTest {
                 }
             }, 10, 10, -1);
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("priority value must be equals or greater than 0", e.getMessage());
+            Assert.assertEquals("priority value must be equal to or greater than 0", e.getMessage());
             throw e;
         }
     }

@@ -37,6 +37,12 @@ public class MojoEntryPoint extends AbstractMojo {
     @Parameter
     private PollingConfig poll;
 
+    @Parameter(property="skip", defaultValue="false")
+    private boolean skipAllConnections;
+
+    @Parameter(defaultValue="0")
+    private int initialWait;
+
     //for unit testing
     void setTcpConnections(List<TCPConnectionConfig> tcpConnections) {
         this.tcpConnections = tcpConnections;
@@ -50,6 +56,11 @@ public class MojoEntryPoint extends AbstractMojo {
     //for unit testing
     void setPoll(PollingConfig pollingConfig) {
         this.poll = pollingConfig;
+    }
+
+    //for unit testing
+    void setSkipAllConnections(boolean skipAllConnections) {
+        this.skipAllConnections = skipAllConnections;
     }
 
     /**
@@ -67,20 +78,28 @@ public class MojoEntryPoint extends AbstractMojo {
             configs.addAll(httpConnections);
         }
 
-        try {
-            List<PollingTask> tasks = toPollingTasks(configs);
+        if (!skipAllConnections) {
 
-            if (tasks.isEmpty()) {
-                getLog().warn("No tasks found");
-            } else {
+            try {
+                List<PollingTask> tasks = toPollingTasks(configs);
 
-                for (PollingTask task : tasks) {
-                    task.run();
+                if (initialWait > 0) {
+                    try {
+                        Thread.sleep(initialWait);
+                    } catch (InterruptedException ignored) {}
                 }
 
+                if (tasks.isEmpty()) {
+                    getLog().warn("No tasks found");
+                } else {
+                    for (PollingTask task : tasks) {
+                        task.run();
+                    }
+
+                }
+            } catch (IllegalArgumentException e) {
+                throw new MojoFailureException(e.getMessage(), e);
             }
-        } catch (IllegalArgumentException e) {
-            throw new MojoFailureException(e.getMessage(), e);
         }
     }
 
@@ -93,10 +112,16 @@ public class MojoEntryPoint extends AbstractMojo {
 
         for (MojoConnectionConfig config : configs) {
             Service service = config.buildService();
-            PollingTask task = new PollingTask(service,
-                    pollingConfig.getAttempts(),
-                    pollingConfig.getSleep(), config.getPriority());
-            pollingTasks.add(task);
+
+            if (config.isSkip()) {
+                getLog().warn(String.format("Skipping task %s",service.toString()));
+            } else {
+                PollingTask task = new PollingTask(service,
+                        pollingConfig.getAttempts(),
+                        pollingConfig.getSleep(),
+                        config.getPriority());
+                pollingTasks.add(task);
+            }
         }
 
         Collections.sort(pollingTasks, TASK_PRIORITY_COMPARATOR);

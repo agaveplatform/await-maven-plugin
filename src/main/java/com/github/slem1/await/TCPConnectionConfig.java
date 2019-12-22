@@ -13,6 +13,8 @@ public class TCPConnectionConfig implements MojoConnectionConfig {
 
     private int priority = Integer.MAX_VALUE;
 
+    private boolean skip;
+
     /**
      * Default constructor used by maven.
      */
@@ -26,16 +28,22 @@ public class TCPConnectionConfig implements MojoConnectionConfig {
      * @param host     tcp host.
      * @param port     tcp port.
      * @param priority the connection priority. 0 is the highest priority.
+     * @param skip     whether to skip this connection check
      */
-    public TCPConnectionConfig(String host, Integer port, int priority) {
+    public TCPConnectionConfig(String host, Integer port, int priority, boolean skip) {
         this.host = host;
         this.port = port;
         this.priority = priority;
+        this.skip = skip;
     }
 
     public int getPriority() {
         return priority;
     }
+
+    public boolean isSkip() {
+        return skip;
+    };
 
     @Override
     public Service buildService() {

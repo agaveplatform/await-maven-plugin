@@ -23,6 +23,7 @@ await-maven-plugin is a plugin to pause maven build until some service is availa
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>false</skip>
                     <poll>
                         <attempts>3</attempts>
                         <sleep>1000</sleep>
@@ -53,6 +54,19 @@ two services:
 The plugin will make 3 attempts on to reach each service, waiting 1000ms between each try.
 
 ## Parameters description
+### skip
+Boolean value indicating whether to skip all connection checks.
+
+```xml
+     <skip>false</skip>
+```
+
+### initialWait
+Time to wait (in ms) before polling begins.
+
+```xml
+     <initialWait>0</initialWait>
+```
 
 ### poll
 The polling configuration object. Apply to each service to contact.
@@ -113,6 +127,13 @@ By default, if not defined, the priority is the lowest (Integer.MAX_VALUE).
     <priority>100</priority>
 ```
 
+##### skip
+Boolean value indicating whether to skip this specific connection.
+
+```xml
+     <skip>false</skip>
+```
+
 ### httpConnections
 
 A collection of http or https connections.
@@ -156,6 +177,13 @@ Set true if you want to skip SSL certificate verification.
     <skipSSLCertVerification>true</skipSSLCertVerification>
 ```
 
+##### skip
+Boolean value indicating whether to skip this specific connection.
+
+```xml
+     <skip>false</skip>
+```
+
 ## Example use case
 
 Wait for a docker container startup and service up with docker-compose-maven-plugin before running integration tests.
@@ -177,6 +205,9 @@ Wait for a docker container startup and service up with docker-compose-maven-plu
                         <goals>
                             <goal>up</goal>
                         </goals>
+                        <configuration>
+                            <skip>${maven.test.skip}</skip>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -194,6 +225,8 @@ Wait for a docker container startup and service up with docker-compose-maven-plu
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>${maven.test.skip}</skip>
+                    <initialWait>5000</initialWait>
                     <poll>
                         <attempts>3</attempts>
                         <sleep>5000</sleep>
