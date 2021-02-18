@@ -9,7 +9,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
-import org.mockito.verification.VerificationMode;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -140,7 +139,7 @@ public class MojoEntryPointTest {
         when(httpService.toString()).thenReturn("http://localhost:10080");
         when(httpConnectionConfig.buildService()).thenReturn(httpService);
 
-        mojoEntryPoint.setSkipAllConnections(true);
+        mojoEntryPoint.setSkip(true);
         mojoEntryPoint.setTcpConnections(Collections.singletonList(tcpConnectionConfig));
         mojoEntryPoint.setHttpConnections(Collections.singletonList(httpConnectionConfig));
 

@@ -7,7 +7,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -15,6 +14,7 @@ import java.util.List;
  * The plugin entry point. Retrieves the plugin configuration and runs the underlying tasks.
  *
  * @author slemoine
+ *
  */
 @Mojo(name = "Await")
 public class MojoEntryPoint extends AbstractMojo {
@@ -35,10 +35,13 @@ public class MojoEntryPoint extends AbstractMojo {
     private List<HttpConnectionConfig> httpConnections;
 
     @Parameter
+    private List<MysqlConnectionConfig> mysqlConnections;
+
+    @Parameter
     private PollingConfig poll;
 
-    @Parameter(property="skip", defaultValue="false")
-    private boolean skipAllConnections;
+    @Parameter(defaultValue="false")
+    private boolean skip;
 
     @Parameter(defaultValue="0")
     private int initialWait;
@@ -54,13 +57,18 @@ public class MojoEntryPoint extends AbstractMojo {
     }
 
     //for unit testing
+    void setMysqlConnections(List<MysqlConnectionConfig> mysqlConnections) {
+        this.mysqlConnections = mysqlConnections;
+    }
+
+    //for unit testing
     void setPoll(PollingConfig pollingConfig) {
         this.poll = pollingConfig;
     }
 
     //for unit testing
-    void setSkipAllConnections(boolean skipAllConnections) {
-        this.skipAllConnections = skipAllConnections;
+    void setSkip(boolean skip) {
+        this.skip = skip;
     }
 
     /**
@@ -78,7 +86,11 @@ public class MojoEntryPoint extends AbstractMojo {
             configs.addAll(httpConnections);
         }
 
-        if (!skipAllConnections) {
+        if (mysqlConnections != null) {
+            configs.addAll(mysqlConnections);
+        }
+
+        if (!skip) {
 
             try {
                 List<PollingTask> tasks = toPollingTasks(configs);
@@ -124,7 +136,7 @@ public class MojoEntryPoint extends AbstractMojo {
             }
         }
 
-        Collections.sort(pollingTasks, TASK_PRIORITY_COMPARATOR);
+        pollingTasks.sort(TASK_PRIORITY_COMPARATOR);
 
         return pollingTasks;
     }

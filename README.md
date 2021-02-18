@@ -39,7 +39,17 @@ await-maven-plugin is a plugin to pause maven build until some service is availa
                             <url>http://mywebservice:9090</url>
                             <statusCode>200</statusCode>
                         </httpConnection>
-                    </httpConnections>    
+                    </httpConnections>
+                    <mysqlConnections>
+                        <mysqlConnection>
+                            <host>localhost</host>
+                            <port>3306</port>
+                            <database>mysql</database>
+                            <username>root</username>
+                            <password>password</password>
+                            <query>select 1</query>
+                        </mysqlConnection>
+                    </mysqlConnections>
                 </configuration>
             </plugin>
 
@@ -50,6 +60,7 @@ two services:
 
   - a tcp service on localhost:5432 (postgres)
   - a 200 OK http response from http://mywebservice:9090.
+  - a mysql client connection to jdbc:mysql://localhost:3306/mysql?username=root&password=password with successful response to query "select 1".
 
 The plugin will make 3 attempts on to reach each service, waiting 1000ms between each try.
 
@@ -175,6 +186,80 @@ Set true if you want to skip SSL certificate verification.
 
 ```xml
     <skipSSLCertVerification>true</skipSSLCertVerification>
+```
+
+##### skip
+Boolean value indicating whether to skip this specific connection.
+
+```xml
+     <skip>false</skip>
+```
+
+### mysqlConnections
+A collection of mysqlConnection elements.
+
+#### tcp
+A mysql connection configuration.
+
+```xml
+    <mysqlConnection>
+      <host>localhost</host>
+      <port>3306</port>
+      <database>mysql</database>
+      <username>root</username>
+      <password>password</password>
+      <query>select 1</query>
+    </mysqlConnection>
+```
+
+##### host
+
+The mysql host.
+```xml
+    <host>localhost</host>
+```
+
+##### port
+
+The mysql port.
+```xml
+    <port>3306</port>
+```
+
+##### database
+
+The mysql database to which to include in the connection string.
+```xml
+    <database>mysql</database>
+```
+
+##### username
+
+The mysql username used to login.
+```xml
+    <username>root</username>
+```
+
+##### password
+
+The mysql password used to login.
+```xml
+    <password>password</password>
+```
+
+##### query
+
+The mysql query to run to verify the connection.
+```xml
+    <query>select 1</query>
+```
+
+##### priority
+
+Defines the order in which the connection will be attempted across tcpConnection and httpConnection. The 0 value is the highest priority.
+By default, if not defined, the priority is the lowest (Integer.MAX_VALUE).
+```xml
+    <priority>100</priority>
 ```
 
 ##### skip
